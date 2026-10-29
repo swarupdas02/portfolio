@@ -1,12 +1,18 @@
+import type { Metadata } from "next";
+import React from "react";
 import "./globals.css";
 import { profile } from "../data/profile";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: `${profile.name} — ${profile.role}`,
   description: profile.statement,
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
       <head>
@@ -17,7 +23,7 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -25,3 +31,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+

@@ -2,24 +2,38 @@
    Core CSS — Pure High-Contrast Accessibility (21:1 WCAG AAA)
    Light mode: #FFFFFF canvas / #000000 ink
    Dark mode:  #000000 canvas / #FFFFFF ink
+   Matches Figma "Theme & Component Foundations" (1440 × 900 reference)
    ========================================================================== */
 
 :root {
   --bg: #ffffff;
   --fg: #000000;
   --border: #000000;
-  --surface-hover: #000000;
-  --fg-hover: #ffffff;
+  --selected-bg: #000000;
+  --selected-fg: #ffffff;
 
-  --font-serif-condensed: "Instrument Serif", "Times New Roman", Times, Georgia,
+  --font-serif-display: "Instrument Serif", "Times New Roman", Times, Georgia,
     serif;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
 
-  --icon-box-size: 2.75rem; /* 44x44px WCAG 2.2 AA/AAA touch target minimum */
-  --icon-radius: 0.625rem;  /* 10px minimal rounded square */
-  --transition-fast: 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  --page-inset-x: 64px;
+  --page-inset-y: 56px;
+  --control-height: 44px;
+  --control-radius: 10px;
+  --segment-radius: 6px;
+  --control-gap: 12px;
+  --hero-stack-gap: 20px;
+  --border-width: 1.5px;
+
+  /* Site-wide Animation Standard: Slide + Fade from Bottom of Element */
+  --motion-offset: 18px;
+  --motion-in-duration: 420ms;
+  --motion-out-duration: 220ms;
+  --motion-stagger-step: 65ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --transition-fast: 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,8 +41,8 @@
     --bg: #000000;
     --fg: #ffffff;
     --border: #ffffff;
-    --surface-hover: #ffffff;
-    --fg-hover: #000000;
+    --selected-bg: #ffffff;
+    --selected-fg: #000000;
   }
 }
 
@@ -36,8 +50,8 @@
   --bg: #000000;
   --fg: #ffffff;
   --border: #ffffff;
-  --surface-hover: #ffffff;
-  --fg-hover: #000000;
+  --selected-bg: #ffffff;
+  --selected-fg: #000000;
 }
 
 /* 1. Reset */
@@ -54,32 +68,155 @@ body {
   height: 100%;
   background-color: var(--bg);
   color: var(--fg);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-fast),
     color var(--transition-fast);
 }
 
-/* 2. Keyboard Accessibility — Skip Link & Focus Ring */
-.skip-link {
-  position: absolute;
-  top: -3.5rem;
-  left: 1.5rem;
-  background: var(--fg);
-  color: var(--bg);
-  padding: 0.625rem 1rem;
-  border-radius: var(--icon-radius);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  z-index: 100;
-  transition: top var(--transition-fast);
+/* 2. Standard Slide-Fade Keyframes & Classes */
+@keyframes slideFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--motion-offset));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.skip-link:focus {
-  top: 1.5rem;
+@keyframes slideFadeOutDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--motion-offset));
+  }
+}
+
+/* Initial page-load staggered reveal for static landmarks */
+.motion-reveal {
+  animation: slideFadeInUp var(--motion-in-duration) var(--motion-ease-out) both;
+  animation-delay: calc(var(--stagger-index, 0) * var(--motion-stagger-step));
+}
+
+/* Swappable content standard: initial staggered slide-fade in,
+   slide-down fade-out on exit, slide-up fade-in on enter */
+.motion-swap {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+[data-motion-phase="initial"] .motion-swap {
+  animation: slideFadeInUp var(--motion-in-duration) var(--motion-ease-out) both;
+  animation-delay: calc(var(--stagger-index, 0) * var(--motion-stagger-step));
+}
+
+[data-motion-phase="exiting"] .motion-swap {
+  animation: slideFadeOutDown var(--motion-out-duration) var(--motion-ease-in)
+     forwards;
+}
+
+[data-motion-phase="entering"] .motion-swap {
+  animation: slideFadeInUp var(--motion-in-duration) var(--motion-ease-out) both;
+}
+
+/* 3. Theme-Aware Asset Visibility (Light vs Dark Figma SVG exports) */
+.theme-asset {
+  display: block;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+}
+
+.theme-asset--light {
+  display: block;
+}
+
+.theme-asset--dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-asset--light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .theme-asset--dark {
+    display: block;
+  }
+}
+
+:root[data-theme="dark"] .theme-asset--light {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-asset--dark {
+  display: block;
+}
+
+/* Invert icon asset inside Reduced Animations button when toggled active */
+.reduced-motion-btn--active .theme-asset--light {
+  display: none;
+}
+
+.reduced-motion-btn--active .theme-asset--dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .reduced-motion-btn--active .theme-asset--light {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .reduced-motion-btn--active .theme-asset--dark {
+    display: none;
+  }
+}
+
+:root[data-theme="dark"] .reduced-motion-btn--active .theme-asset--light {
+  display: block;
+}
+
+:root[data-theme="dark"] .reduced-motion-btn--active .theme-asset--dark {
+  display: none;
+}
+
+/* 4. Keyboard Accessibility — Skip to Main Content Button & Focus Ring */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: var(--page-inset-x);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height);
+  padding: 0 14px;
+  background-color: var(--selected-bg);
+  color: var(--selected-fg);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--control-radius);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.96px;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 200;
+  transform: translateY(-150%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 :focus-visible {
@@ -87,39 +224,194 @@ body {
   outline-offset: 4px;
 }
 
-/* 3. Viewport Canvas */
-.page-shell {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(1.5rem, 4vw, 3.5rem);
+.hero-stage:focus {
+  outline: none;
 }
 
-/* 4. Top Navbar with Minimal Rounded-Square Icon Links */
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* 5. Viewport Canvas & Decorative Perspective Grid */
+.page-shell {
+  position: relative;
+  min-height: 100dvh;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--page-inset-y) var(--page-inset-x);
+  overflow: hidden;
+}
+
+.perspective-grid-stage,
+.perspective-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.perspective-grid__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+/* 6. Top Navbar (44px height, 3 groups: Left AAA Badge, Center A11y Controls, Right Icons) */
+.top-nav {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--control-height);
+  gap: var(--control-gap);
 }
 
 .a11y-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--control-radius);
+  padding: 0 14px;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1.5px solid var(--border);
-  border-radius: var(--icon-radius);
-  padding: 0.5rem 0.75rem;
-  line-height: 1;
-  user-select: none;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.96px;
+  color: var(--fg);
+  background-color: transparent;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
-.icon-links {
+.a11y-badge:hover {
+  transform: translateY(-1px);
+}
+
+/* Centered Accessibility Controls */
+.a11y-controls {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--control-gap);
+}
+
+.reduced-motion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--control-height);
+  padding: 0 14px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--control-radius);
+  background-color: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.96px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.reduced-motion-btn--active {
+  background-color: var(--selected-bg);
+  color: var(--selected-fg);
+}
+
+.reduced-motion-btn:hover {
+  transform: translateY(-1px);
+}
+
+.reduced-motion-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.zoom-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--control-height);
+  padding: 4px 4px 4px 10px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--control-radius);
+  background-color: transparent;
+}
+
+.zoom-segments {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 32px;
+  border-radius: var(--segment-radius);
+  background-color: var(--selected-bg);
+  transform: translateX(0);
+  transition: transform var(--transition-fast),
+    background-color var(--transition-fast);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.zoom-segments[data-active="400"] .zoom-slider {
+  transform: translateX(58px);
+}
+
+.zoom-segment {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--segment-radius);
+  background-color: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.96px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.zoom-segment--selected {
+  color: var(--selected-fg);
+}
+
+/* Right Social & Theme Controls */
+.icon-links {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--control-gap);
   list-style: none;
 }
 
@@ -127,90 +419,177 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--icon-box-size);
-  height: var(--icon-box-size);
-  border: 1.5px solid var(--border);
-  border-radius: var(--icon-radius);
+  width: var(--control-height);
+  height: var(--control-height);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--control-radius);
   background-color: transparent;
   color: var(--fg);
   cursor: pointer;
   text-decoration: none;
-  transition: transform var(--transition-fast),
-    background-color var(--transition-fast),
-    color var(--transition-fast);
-}
-
-.icon-btn svg {
-  width: 1.125rem;
-  height: 1.125rem;
-  stroke: currentColor;
-  stroke-width: 1.75;
-  fill: none;
+  flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
 
-/* Subtle Micro-Interactions */
 .icon-btn:hover {
-  background-color: var(--surface-hover);
-  color: var(--fg-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .icon-btn:active {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(0) scale(0.97);
 }
 
-/* 5. Left-Center Hero Anchor */
+.icon-btn--theme {
+  background-color: var(--selected-bg);
+  color: var(--selected-fg);
+}
+
+/* Exact 18×18px and 14×14px Figma Icon Slots */
+.icon-slot {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.icon-inner-18 {
+  position: absolute;
+  inset: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.icon-inner-14 {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+/* 7. Left-Center Hero Anchor */
 .hero-stage {
-  flex: 1;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-start;
-  padding: 4rem 0;
+  justify-content: center;
+  gap: var(--hero-stack-gap);
+  width: 100%;
 }
 
 .hero-name {
-  font-family: var(--font-serif-condensed);
+  font-family: var(--font-serif-display);
   font-weight: 400;
-  font-size: clamp(4.5rem, 13vw, 11rem);
+  font-style: normal;
+  font-size: clamp(4.5rem, 10.2778vw, 148px);
   line-height: 0.9;
   letter-spacing: -0.03em;
-  font-stretch: condensed;
-  user-select: none;
+  color: var(--fg);
+  white-space: nowrap;
   transition: letter-spacing var(--transition-fast);
 }
 
-.hero-name:hover {
-  letter-spacing: -0.015em;
-}
-
 .hero-role {
-  margin-top: 1.25rem;
   font-family: var(--font-mono);
-  font-size: clamp(0.875rem, 1.2vw, 1rem);
-  letter-spacing: 0.06em;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: normal;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
+  color: var(--fg);
+  white-space: nowrap;
 }
 
-/* 6. Minimal Footer Bar */
+/* 8. Bottom Metadata Bar (Left-aligned, never centered) */
 .bottom-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  justify-content: flex-start;
+  width: 100%;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.48px;
+  color: var(--fg);
+  white-space: nowrap;
 }
 
-/* 7. Reduced Motion Compliance */
+/* 9. 400% Reflow / Zoom Preview Mode */
+:root[data-zoom="400"] .hero-name {
+  font-size: clamp(5rem, 14vw, 200px);
+  white-space: normal;
+}
+
+:root[data-zoom="400"] .hero-role {
+  font-size: 24px;
+  white-space: normal;
+}
+
+:root[data-zoom="400"] .bottom-bar {
+  font-size: 16px;
+}
+
+/* 10. Responsive Reflow for Smaller Viewports */
+@media (max-width: 1024px) {
+  :root {
+    --page-inset-x: 32px;
+    --page-inset-y: 32px;
+  }
+
+  .top-nav {
+    flex-wrap: wrap;
+  }
+
+  .a11y-controls {
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .hero-name {
+    white-space: normal;
+  }
+}
+
+/* 11. Reduced Motion Compliance (System or Navbar Toggle) */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
   }
+
+  .motion-reveal,
+  .motion-swap {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+}
+
+:root[data-reduced-motion="true"] .motion-reveal,
+:root[data-reduced-motion="true"] .motion-swap {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }

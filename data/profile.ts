@@ -1,10 +1,51 @@
 // Single source of truth for Swarup Das's portfolio content.
 
-export const profile = {
+export interface ExperienceItem {
+  role: string;
+  company: string;
+  employmentType: string;
+  period: string;
+  location: string;
+  url?: string;
+  skills: string[];
+}
+
+export interface EducationItem {
+  institution: string;
+  degree: string;
+  period: string;
+  grade?: string;
+  activities?: string;
+  finalYearProject?: string;
+  skills?: string[];
+}
+
+export interface ProfileData {
+  name: string;
+  role: string;
+  displayRole: string;
+  statement: string;
+  wcagUrl: string;
+  stackSignature: string;
+  location: string;
+  email: string;
+  links: {
+    github: string;
+    linkedin: string;
+    email: string;
+  };
+  experience: ExperienceItem[];
+  education: EducationItem[];
+}
+
+export const profile: ProfileData = {
   name: "Swarup Das",
   role: "Senior Fullstack Engineer",
+  displayRole: "FULLSTACK ENGINEER",
   statement:
     "Engineered for absolute simplicity and WCAG AAA 21:1 contrast.",
+  wcagUrl: "https://www.w3.org/TR/WCAG22/",
+  stackSignature: "SEMANTIC HTML · CORE CSS",
   location: "Kolkata, West Bengal, India",
   email: "swarup@theqa.in",
   links: {
@@ -78,3 +119,4 @@ export const profile = {
     },
   ],
 };
+
